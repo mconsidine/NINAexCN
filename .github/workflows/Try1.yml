@@ -25,18 +25,13 @@ jobs:
     # ------------------------------------------------------------
     # Fetch OnStepX sources into temp directory
     # ------------------------------------------------------------
-    - name: Fetch OnStepX sources
+    - name: Fetch NINA sources
       run: |
-        case "${{ github.event.inputs.build_target }}" in
-          develop)         REF=develop ;;
-        esac
-
-        echo "Using NINA ref: $REF"
-
-        git clone --depth 1 --branch "$REF" \
+      
+        git clone --depth 1 --branch defelop \
           https://github.com/isbeorn/nina.git nina-src
    
-    - name: cd to nina src
+    - name: cd to NINA src
       run:
         cd nina-src
         git checkout develop
