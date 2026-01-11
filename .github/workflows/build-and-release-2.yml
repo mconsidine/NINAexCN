@@ -1,0 +1,147 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+
+env:
+  BUILD_CONFIG: Release
+
+jobs:
+  build:
+    name: Build and Prepare Setup
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: nschloe/action-cached-lfs-checkout@v1
+      with:
+        submodules: recursive
+
+    - name: Set up MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Set up .NET 10.0 SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Install Pandoc
+      run: choco install pandoc -y
+
+    - name: Restore NuGet packages
+      run: dotnet restore NINA.sln
+      
+    - name: Generate release notes
+      run: |
+        pandoc RELEASE_NOTES.md -f markdown -t rtf -s -o RELEASE_NOTES.rtf
+        pandoc RELEASE_NOTES.md -f markdown -t html -s -o RELEASE_NOTES.html --template md-template.html --metadata title="Nighttime Imaging 'N' Astronomy"
+
+    - name: Build NINA project
+      run: dotnet build NINA\NINA.csproj -c ${{ env.BUILD_CONFIG }} -r win-x64
+
+    - name: Remove DocumentationComponent and Canon/Nikon references from WiX
+      shell: pwsh
+      run: |
+        $wxsFile = "NINA.SetupBundle\Product.wxs"
+        if (Test-Path $wxsFile) {
+          $content = Get-Content $wxsFile -Raw
+          # Remove the ComponentGroupRef for DocumentationComponent
+          $content = $content -replace '(<ComponentGroupRef\s+Id="DocumentationComponent"\s*/>)', '<!-- $1 -->'
+          # Comment out any lines containing Canon or Nikon (case-insensitive)
+          $content = $content -replace '(?m)^(\s*)(.*(Canon|Nikon).*)$', '$1<!-- $2 -->'
+          Set-Content $wxsFile $content
+          Write-Host "Commented out DocumentationComponent and Canon/Nikon references in Product.wxs"
+        }
+
+    - name: Build WiX Setup Bundle
+      run: dotnet msbuild NINA.SetupBundle\NINA.SetupBundle.wixproj /p:Configuration=${{ env.BUILD_CONFIG }} /p:Platform=x64 /p:AllowUnsafeBlocks=true
+
+    - name: Copy .pdb files to setup output folder
+      run: |
+        $solutionDir = "$(Resolve-Path .)"
+        $pdbSource = "$solutionDir\NINA\bin\${{ env.BUILD_CONFIG }}\net10.0-windows\win-x64"
+        $pdbTarget = "$solutionDir\NINA.SetupBundle\bin\x64\${{ env.BUILD_CONFIG }}"
+
+        Remove-Item "$solutionDir\RELEASE_NOTES.rtf" -Force -ErrorAction SilentlyContinue
+
+        $pdbFiles = @(
+          "NINA.pdb",
+          "NINA.Astrometry.pdb",
+          "NINA.Core.pdb",
+          "NINA.Equipment.pdb",
+          "NINA.Image.pdb",
+          "NINA.MGEN.pdb",
+          "NINA.Platesolving.pdb",
+          "NINA.Profile.pdb",
+          "NINA.Sequencer.pdb",
+          "NINA.WPF.Base.pdb",
+          "NINA.CustomControlLibrary.pdb",
+          "NINA.Plugin.pdb"
+        )
+
+        foreach ($file in $pdbFiles) {
+          Write-Host "Copying $file to setup output"
+          Copy-Item "$pdbSource\$file" "$pdbTarget\$file" -Force
+        }
+      
+    - name: Pack all nugets
+      run: |
+        dotnet pack .\nikoncswrapper\nikoncswrapper.csproj -c ${{ env.BUILD_CONFIG }} --output publish
+        dotnet pack .\NINA.Core\NINA.Core.csproj -c ${{ env.BUILD_CONFIG }} --output publish
+        dotnet pack .\NINA.Astrometry\NINA.Astrometry.csproj -c ${{ env.BUILD_CONFIG }} --output publish
+        dotnet pack .\NINA.Equipment\NINA.Equipment.csproj -c ${{ env.BUILD_CONFIG }} --output publish
+        dotnet pack .\NINA.Image\NINA.Image.csproj -c ${{ env.BUILD_CONFIG }} --output publish
+        dotnet pack .\NINA.MGEN\NINA.MGEN.csproj -c ${{ env.BUILD_CONFIG }} --output publish
+        dotnet pack .\NINA.PlateSolving\NINA.PlateSolving.csproj -c ${{ env.BUILD_CONFIG }} --output publish
+        dotnet pack .\NINA.Profile\NINA.Profile.csproj -c ${{ env.BUILD_CONFIG }} --output publish
+        dotnet pack .\NINA.Sequencer\NINA.Sequencer.csproj -c ${{ env.BUILD_CONFIG }} --output publish
+        dotnet pack .\NINA.WPF.Base\NINA.WPF.Base.csproj -c ${{ env.BUILD_CONFIG }} --output publish
+        dotnet pack .\NINA.CustomControlLibrary\NINA.CustomControlLibrary.csproj -c ${{ env.BUILD_CONFIG }} --output publish
+        dotnet pack .\NINA.Plugin\NINA.Plugin.csproj -c ${{ env.BUILD_CONFIG }} --output publish
+
+    - name: Upload installer executable
+      uses: actions/upload-artifact@v4
+      with:
+        name: installer-exe
+        path: "NINA.SetupBundle/bin/x64/${{ env.BUILD_CONFIG }}/*.exe"
+        retention-days: 30
+        if-no-files-found: error
+
+    - name: Upload debug symbols
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-symbols
+        path: "NINA.SetupBundle/bin/x64/${{ env.BUILD_CONFIG }}/*.pdb"
+        retention-days: 30
+        if-no-files-found: error
+
+    - name: Upload release notes
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-notes
+        path: |
+          RELEASE_NOTES.html
+          RELEASE_NOTES.md
+        retention-days: 30
+
+    - name: Upload NuGet packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: nuget-packages
+        path: |
+          publish/*.nupkg
+          publish/*.snupkg
+        retention-days: 30
+
+    - name: Generate build summary
+      shell: pwsh
+      run: |
+        echo "## Build Complete! 🎉" >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "**Configuration:** ${{ env.BUILD_CONFIG }}" >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "### Artifacts Generated" >> $env:GITHUB_STEP_SUMMARY
+        echo "- 🔧 Installer executable" >> $env:GITHUB_STEP_SUMMARY
+        echo "- 🐛 Debug symbols (.pdb files)" >> $env:GITHUB_STEP_SUMMARY
+        echo "- 📝 Release notes" >> $env:GITHUB_STEP_SUMMARY
+        echo "- 📦 NuGet packages" >> $env:GITHUB_STEP_SUMMARY
