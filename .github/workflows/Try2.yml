@@ -1,0 +1,62 @@
+name: Build nina
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_target:
+        type: choice
+        description: 'Source to build'
+        required: true
+        default: develop
+        options: 
+        - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # ------------------------------------------------------------
+    # Checkout *your* build project
+    # ------------------------------------------------------------
+    - name: Checkout build harness
+      uses: actions/checkout@v4
+
+    # ------------------------------------------------------------
+    # Fetch OnStepX sources into temp directory
+    # ------------------------------------------------------------
+    - name: Fetch NINA sources
+      run: |
+        git clone --depth 1 --branch develop https://github.com/isbeorn/nina.git nina-src
+   
+    - name: cd to NINA src
+      run: |
+        cd nina-src
+        ls
+        git checkout develop
+        git submodule update --init
+    
+    - name: Set up .NET 10.0 SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x
+        
+    - name: build nina
+      run: |
+        cd nina-src
+        ls
+        dotnet build NINA\NINA.csproj
+        ls
+        
+    - name: dirs
+      run : |
+        cd nina-src
+        ls NINA/bin
+        ls NINA/bin/Debug/net10.0-windows/win-x64
+
+    - name: 📦 Upload Merged Binary Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: nina_develop
+        path: NINA/bin/Debug/net10.0-windows/win-x64
+      
