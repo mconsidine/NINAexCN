@@ -12,10 +12,16 @@ jobs:
     runs-on: windows-latest
 
     steps:
+    #- name: Checkout repository
+    #  uses: nschloe/action-cached-lfs-checkout@v1
+    #  with:
+    #    submodules: recursive
+        
     - name: Checkout repository
-      uses: nschloe/action-cached-lfs-checkout@v1
-      with:
-        submodules: recursive
+      uses: actions/checkout@v4
+
+    - name: Initialize submodules
+      run: git submodule update --init #--recursive
 
     - name: Set up MSBuild
       uses: microsoft/setup-msbuild@v2
@@ -39,19 +45,19 @@ jobs:
     - name: Build NINA project
       run: dotnet build NINA\NINA.csproj -c ${{ env.BUILD_CONFIG }} -r win-x64
 
-    - name: Remove DocumentationComponent and Canon/Nikon references from WiX
-      shell: pwsh
-      run: |
-        $wxsFile = "NINA.SetupBundle\Product.wxs"
-        if (Test-Path $wxsFile) {
-          $content = Get-Content $wxsFile -Raw
-          # Remove the ComponentGroupRef for DocumentationComponent
-          $content = $content -replace '(<ComponentGroupRef\s+Id="DocumentationComponent"\s*/>)', '<!-- $1 -->'
-          # Comment out any lines containing Canon or Nikon (case-insensitive)
-          $content = $content -replace '(?m)^(\s*)(.*(Canon|Nikon).*)$', '$1<!-- $2 -->'
-          Set-Content $wxsFile $content
-          Write-Host "Commented out DocumentationComponent and Canon/Nikon references in Product.wxs"
-        }
+    #- name: Remove DocumentationComponent and Canon/Nikon references from WiX
+    #  shell: pwsh
+    #  run: |
+    #    $wxsFile = "NINA.SetupBundle\Product.wxs"
+    #    if (Test-Path $wxsFile) {
+    #      $content = Get-Content $wxsFile -Raw
+    #      # Remove the ComponentGroupRef for DocumentationComponent
+    #      $content = $content -replace '(<ComponentGroupRef\s+Id="DocumentationComponent"\s*/>)', '<!-- $1 -->'
+    #      # Comment out any lines containing Canon or Nikon (case-insensitive)
+    #      $content = $content -replace '(?m)^(\s*)(.*(Canon|Nikon).*)$', '$1<!-- $2 -->'
+    #      Set-Content $wxsFile $content
+    #      Write-Host "Commented out DocumentationComponent and Canon/Nikon references in Product.wxs"
+    #    }
 
     - name: Build WiX Setup Bundle
       run: dotnet msbuild NINA.SetupBundle\NINA.SetupBundle.wixproj /p:Configuration=${{ env.BUILD_CONFIG }} /p:Platform=x64 /p:AllowUnsafeBlocks=true
