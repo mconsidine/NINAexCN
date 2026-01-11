@@ -41,9 +41,10 @@ jobs:
 
     - name: Restore NuGet packages
       run: |
+        cd nina-src
         echo "listing"
         dir
-        wheeis NIBA.sln
+        whereis NINA.sln
         dotnet restore NINA.sln
       
     - name: Generate release notes
