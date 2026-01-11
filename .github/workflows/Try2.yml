@@ -1,4 +1,4 @@
-name: Build nina
+name: Build nina2
 
 on:
   workflow_dispatch:
@@ -52,12 +52,14 @@ jobs:
     - name: dirs
       run : |
         cd nina-src
-        ls NINA/bin
-        ls NINA/bin/Debug/net10.0-windows/win-x64
+        ls -ld NINA/bin
+        echo "end of ld ---------"
+        ls -lha NINA/bin/Debug
+        echo "end of debug list"
 
     - name: 📦 Upload Merged Binary Artifact
       uses: actions/upload-artifact@v4
       with:
         name: nina_develop
-        path: NINA/bin/Debug/net10.0-windows/win-x64
+        path: NINA/bin/Debug
       
