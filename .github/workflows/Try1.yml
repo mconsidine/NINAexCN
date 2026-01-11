@@ -27,12 +27,12 @@ jobs:
     # ------------------------------------------------------------
     - name: Fetch NINA sources
       run: |
-      
         git clone --depth 1 --branch develop https://github.com/isbeorn/nina.git nina-src
    
     - name: cd to NINA src
       run: |
         cd nina-src
+        dir
         git checkout develop
         git submodule update --init
     
@@ -42,6 +42,7 @@ jobs:
         dotnet-version: 10.0.x
     - name: build nina
       run: |
+        cd nina-src
         dir
         dotnet build NINA\NINA.csproj
         
