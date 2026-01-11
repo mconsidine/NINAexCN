@@ -54,7 +54,7 @@ jobs:
         cd nina-src
         ls -ld NINA/bin
         echo "end of ld ---------"
-        ls -lha NINA/bin/Debug/net10.0-windows
+        ls -lha NINA/bin/Debug/net10.0-windows/win-x64
         echo "end of debug list"
 
     - name: 📦 Upload Merged Binary Artifact
