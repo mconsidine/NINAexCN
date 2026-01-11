@@ -46,7 +46,7 @@ jobs:
         cd nina-src
         ls
         # dotnet build NINA\NINA.csproj
-        dotnet build NINA/NINA.csproj
+        dotnet build NINA/NINA.csproj -c Release
         ls
         
     - name: dirs
@@ -62,6 +62,6 @@ jobs:
     - name: 📦 Upload Merged Binary Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: nina_develop
+        name: nina_develop_release
         path: nina-src/NINA.zip
       
