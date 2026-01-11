@@ -40,17 +40,22 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 10.0.x
+        
     - name: build nina
       run: |
         cd nina-src
         dir
         dotnet build NINA\NINA.csproj
         dir
-        dir NINA/bin
+        
+    - name: dirs
+      run : |
+        dir NINA\bin
+        dir NINA\bin\Debug
 
     - name: 📦 Upload Merged Binary Artifact
       uses: actions/upload-artifact@v4
       with:
         name: nina_develop
-        path: NINA\bin\Debug\*.*
+        path: NINA\bin\Debug\*
       
