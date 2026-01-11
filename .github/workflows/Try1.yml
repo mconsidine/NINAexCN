@@ -45,5 +45,6 @@ jobs:
         cd nina-src
         dir
         dotnet build NINA\NINA.csproj
-        
+        dir
+        dir bin
       
