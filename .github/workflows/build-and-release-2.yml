@@ -19,7 +19,11 @@ jobs:
         
     - name: Checkout repository
       uses: actions/checkout@v4
-
+      
+    - name: Fetch NINA sources
+      run: |
+        git clone --depth 1 --branch develop https://github.com/isbeorn/nina.git nina-src
+   
     - name: Initialize submodules
       run: git submodule update --init #--recursive
 
