@@ -23,7 +23,8 @@ jobs:
     - name: Fetch NINA sources
       run: |
         git clone --depth 1 --branch develop https://github.com/isbeorn/nina.git nina-src
-   
+        dir
+        
     - name: Initialize submodules
       run: git submodule update --init #--recursive
 
@@ -39,7 +40,11 @@ jobs:
       run: choco install pandoc -y
 
     - name: Restore NuGet packages
-      run: dotnet restore NINA.sln
+      run: |
+        echo "listing"
+        dir
+        wheeis NIBA.sln
+        dotnet restore NINA.sln
       
     - name: Generate release notes
       run: |
