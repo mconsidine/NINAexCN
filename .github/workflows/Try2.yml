@@ -45,7 +45,8 @@ jobs:
       run: |
         cd nina-src
         ls
-        dotnet build NINA\NINA.csproj
+        # dotnet build NINA\NINA.csproj
+        dotnet build NINA/NINA.csproj
         ls
         
     - name: dirs
