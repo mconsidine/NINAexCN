@@ -52,14 +52,16 @@ jobs:
     - name: dirs
       run : |
         cd nina-src
-        ls -ld NINA/bin
+        ls -ld NINA
         echo "end of ld ---------"
-        ls -lha NINA/bin/Debug/net10.0-windows/win-x64
-        echo "end of debug list"
+        # ls -lha NINA/bin/Debug/net10.0-windows/win-x64
+        # echo "end of debug list"
+        zip -r NINA.zip NINA
+        ls -l
 
     - name: 📦 Upload Merged Binary Artifact
       uses: actions/upload-artifact@v4
       with:
         name: nina_develop
-        path: NINA/bin/Debug
+        path: NINA.zip
       
