@@ -58,5 +58,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: nina_develop
-        path: NINA\bin\Debug\*
+        path: NINA/bin/Debug/net10.0-windows/win-x64
       
