@@ -44,7 +44,6 @@ jobs:
         cd nina-src
         echo "listing"
         dir
-        whereis NINA.sln
         dotnet restore NINA.sln
       
     - name: Generate release notes
