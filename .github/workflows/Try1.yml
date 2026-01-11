@@ -28,8 +28,7 @@ jobs:
     - name: Fetch NINA sources
       run: |
       
-        git clone --depth 1 --branch develop \
-          https://github.com/isbeorn/nina.git nina-src
+        git clone --depth 1 --branch develop https://github.com/isbeorn/nina.git nina-src
    
     - name: cd to NINA src
       run:
